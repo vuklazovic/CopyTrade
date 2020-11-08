@@ -1,0 +1,177 @@
+#property copyright "Copyright 2020, MetaQuotes Software Corp."
+#property link      "https://www.mql5.com"
+#property version   "1.00"
+#property strict
+#include <hash.mqh>
+class Trade
+{
+   public:string symbol;
+   public:int type,ticket,id;
+   public:double price,lot,sl,tp;
+};
+class Tickets
+{
+   public:int a,b;
+};
+int arr[509999999];
+Tickets Ticket[1000];
+Trade Trades[1000];
+
+string get(string url)//screjpuje sa php
+{
+   string cookie=NULL,headers;
+   char post[],result[];
+   int res;
+   int timeout=5000;
+   ResetLastError();
+   string html="";
+   res=WebRequest("GET",url,cookie,NULL,timeout,post,0,result,headers);
+   int tit=ArraySize(result)-1;
+   html="";
+   for(int xx=0;xx<=tit;xx++)
+   {
+       html=html+CharToStr(result[xx]);
+   }
+   return html;
+}
+string tata[1231][1231];
+string tata2[1231];
+
+void getClosed()
+{
+  for(int i=0;i<=500;i++)
+
+   {
+      tata2[i]="";
+   }
+     int t=0;
+      char res[];
+    string vuk=get("http://localhost/read2.php");
+       StringToCharArray(vuk,res,0,StringLen(vuk));
+     for(int i=0;i<StringLen(vuk);i++)
+   {
+     
+      if(res[i]!='#')
+      {
+         tata2[t]+=CharToStr(res[i]);
+      
+      }
+      else 
+      {
+        t++;
+      }
+     
+
+   }
+   
+}
+int getData()//puni klasu trades i vraca broj elemenata
+{
+   
+   double sl,tp,cls,lot,money;
+   string str,symbol;
+   int t=0,k=0,p=0,i,j,type;
+   string vuk=get("http://localhost/read.php");
+   StringReplace(vuk,"_",".");
+   char res[];
+   for(int i=0;i<=500;i++)
+   for(int j=0;j<=500;j++)
+   {
+      tata[i][j]="";
+   }
+   StringToCharArray(vuk,res,0,StringLen(vuk));
+   for(int i=0;i<StringLen(vuk);i++)
+   {
+      if(res[i]=='\n')
+      {
+         p++;
+         t=0;
+         continue;
+      }
+      if(res[i]!='#')
+      {
+         tata[p][t]+=CharToStr(res[i]);
+      
+      }
+      else 
+      {
+        t++;
+      }
+     
+
+   }
+   
+    for(i=0;i<p;i++)
+    {
+        Trades[i].symbol=tata[i][0];
+        Trades[i].type=tata[i][1];
+        Trades[i].lot=tata[i][2];
+        Trades[i].sl=tata[i][3];
+        Trades[i].tp=tata[i][4];
+        Trades[i].price=tata[i][5];
+        Trades[i].id=tata[i][6];
+       
+    }
+    return p;
+      
+}
+
+   
+void OnStart()
+{
+   Hash *h = new Hash();
+   while(1)
+   {
+   int p=getData();
+   string high;
+   for(int i=0;i<p;i++)
+   {     
+        
+         high = h.hGetString(IntegerToString(Trades[i].id));
+         if(StringLen(high)==0)
+         {
+             if(Trades[i].type<=1)
+             {
+               int ticket=OrderSend(Trades[i].symbol,Trades[i].type,Trades[i].lot,SymbolInfoDouble(Trades[i].symbol,SYMBOL_BID),3,Trades[i].sl,Trades[i].tp,"My order",69,0,clrGreen);
+               h.hPutString(IntegerToString(Trades[i].id),ticket);
+             }
+             else
+             {
+               int ticket=OrderSend(Trades[i].symbol,Trades[i].type,Trades[i].lot,Trades[i].price,3,Trades[i].sl,Trades[i].tp,"My order",69,0,clrGreen);
+               h.hPutString(IntegerToString(Trades[i].id),ticket);
+             }
+         }
+         else
+         {
+             string low=h.hGetString(Trades[i].id);
+             if(OrderSelect(StringToInteger(low), SELECT_BY_TICKET)==true)
+            {
+                 bool res=OrderModify(OrderTicket(),OrderOpenPrice(),Trades[i].sl,Trades[i].tp,0,Blue);  
+            }
+           // 
+         }
+   }
+   getClosed();
+
+   high = h.hGetString(tata2[3]);
+    if(OrderSelect(StringToInteger(high), SELECT_BY_TICKET)==true)
+   {
+         OrderClose(StringToInteger(high),OrderLots(),SymbolInfoDouble(StringToInteger(high),SYMBOL_BID),3,Red);
+   }
+    high = h.hGetString(tata2[2]);
+    if(OrderSelect(StringToInteger(high), SELECT_BY_TICKET)==true)
+   {
+         OrderClose(StringToInteger(high),OrderLots(),SymbolInfoDouble(StringToInteger(high),SYMBOL_BID),3,Red);
+   }
+    high = h.hGetString(tata2[1]);
+    if(OrderSelect(StringToInteger(high), SELECT_BY_TICKET)==true)
+   {
+         OrderClose(StringToInteger(high),OrderLots(),SymbolInfoDouble(StringToInteger(high),SYMBOL_BID),3,Red);
+   }
+
+   //Sleep(200);
+   
+}
+   
+}
+   

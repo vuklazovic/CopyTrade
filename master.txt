@@ -1,0 +1,83 @@
+#property copyright "Copyright 2020, MetaQuotes Software Corp."
+#property link      "https://www.mql5.com"
+#property version   "1.00"
+#property strict
+
+class Trade
+{
+   public:string symbol;
+   public:int type,ticket,id;
+   public:double price,lot,sl,tp;
+};
+string closed;
+Trade Trades[1000];
+
+void sendToServer(string String)//salje na server
+{
+     string cookie=NULL,headers;
+     char post[],result[],post2[];
+     StringToCharArray(String,post,0,StringLen(String));
+     string google_url="http://localhost/mql.php";
+     ResetLastError();
+     int timeout=5000;
+     int res=WebRequest("POST",google_url,cookie,"vuk:vuk",timeout,post,33,result,headers);
+}
+void sendClosed()
+{
+    string data="#";
+    int hstTotal=OrdersHistoryTotal();
+    OrderSelect(hstTotal-1,SELECT_BY_POS,MODE_HISTORY);
+       
+    data=StringConcatenate(OrderTicket(),data);
+    data=StringConcatenate("#",data);
+    OrderSelect(hstTotal-2,SELECT_BY_POS,MODE_HISTORY);
+    data=StringConcatenate(OrderTicket(),data);
+    data=StringConcatenate("#",data);
+    OrderSelect(hstTotal-3,SELECT_BY_POS,MODE_HISTORY);
+    data=StringConcatenate(OrderTicket(),data);
+    data=StringConcatenate("#",data);
+    string String=data;
+   
+     string cookie=NULL,headers;
+     char post[],result[],post2[];
+     StringToCharArray(String,post,0,StringLen(String));
+     string google_url="http://localhost/closed.php";
+     ResetLastError();
+     int timeout=5000;
+     int res=WebRequest("POST",google_url,cookie,"vuk:vuk",timeout,post,33,result,headers);
+       
+
+    
+}
+string fillData()//puni podatke u klasu i vraca string koji se salje na server
+{
+   string str="",strr="",data="";
+   for(int i=0;i<OrdersTotal();i++)
+   {
+      if(OrderSelect(i, SELECT_BY_POS, MODE_TRADES) == true)
+      {
+         Trades[i].symbol = OrderSymbol();
+         Trades[i].type = OrderType();
+         Trades[i].price = OrderOpenPrice();
+         Trades[i].lot = OrderLots();
+         Trades[i].sl = OrderStopLoss();
+         Trades[i].tp = OrderTakeProfit();     
+         Trades[i].ticket=OrderTicket();
+         Trades[i].id=OrderTicket();
+         strr=StringConcatenate(Trades[i].symbol,"#",Trades[i].type,"#",Trades[i].lot,"#",Trades[i].sl,"#",Trades[i].tp,"#",Trades[i].price,"#",Trades[i].id,"#","\n");
+         data=StringConcatenate(strr,data);
+      }
+   }
+   return data;
+}
+
+void OnStart()
+  {
+     while(1)
+     {
+
+         sendClosed();
+         sendToServer(fillData());
+         //Sleep(100);
+     }
+  }
