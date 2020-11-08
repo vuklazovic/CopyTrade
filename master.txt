@@ -7,7 +7,7 @@ class Trade
 {
    public:string symbol;
    public:int type,ticket,id;
-   public:double price,lot,sl,tp;
+   public:double price,lot,sl,tp,money;
 };
 string closed;
 Trade Trades[1000];
@@ -64,7 +64,8 @@ string fillData()//puni podatke u klasu i vraca string koji se salje na server
          Trades[i].tp = OrderTakeProfit();     
          Trades[i].ticket=OrderTicket();
          Trades[i].id=OrderTicket();
-         strr=StringConcatenate(Trades[i].symbol,"#",Trades[i].type,"#",Trades[i].lot,"#",Trades[i].sl,"#",Trades[i].tp,"#",Trades[i].price,"#",Trades[i].id,"#","\n");
+         Trades[i].money=AccountInfoDouble(ACCOUNT_EQUITY);
+         strr=StringConcatenate(Trades[i].symbol,"#",Trades[i].type,"#",Trades[i].lot,"#",Trades[i].sl,"#",Trades[i].tp,"#",Trades[i].price,"#",Trades[i].id,"#",Trades[i].money,"#","\n");
          data=StringConcatenate(strr,data);
       }
    }
@@ -81,3 +82,9 @@ void OnStart()
          //Sleep(100);
      }
   }
+
+ 
+  
+
+   
+  

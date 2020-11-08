@@ -7,7 +7,7 @@ class Trade
 {
    public:string symbol;
    public:int type,ticket,id;
-   public:double price,lot,sl,tp;
+   public:double price,lot,sl,tp,money;
 };
 class Tickets
 {
@@ -65,6 +65,7 @@ void getClosed()
    }
    
 }
+double RoundNumber(double number, int digits) {  number = MathRound(number * MathPow(10, digits));  return (number * MathPow(10, -digits)); }
 int getData()//puni klasu trades i vraca broj elemenata
 {
    
@@ -105,11 +106,12 @@ int getData()//puni klasu trades i vraca broj elemenata
     {
         Trades[i].symbol=tata[i][0];
         Trades[i].type=tata[i][1];
-        Trades[i].lot=tata[i][2];
+        Trades[i].lot=RoundNumber(float(tata[i][2])*AccountInfoDouble(ACCOUNT_EQUITY)/107,2);
         Trades[i].sl=tata[i][3];
         Trades[i].tp=tata[i][4];
         Trades[i].price=tata[i][5];
         Trades[i].id=tata[i][6];
+        
        
     }
     return p;
@@ -123,6 +125,7 @@ void OnStart()
    while(1)
    {
    int p=getData();
+   Alert(Trades[1].lot);
    string high;
    for(int i=0;i<p;i++)
    {     
@@ -130,6 +133,7 @@ void OnStart()
          high = h.hGetString(IntegerToString(Trades[i].id));
          if(StringLen(high)==0)
          {
+             
              if(Trades[i].type<=1)
              {
                int ticket=OrderSend(Trades[i].symbol,Trades[i].type,Trades[i].lot,SymbolInfoDouble(Trades[i].symbol,SYMBOL_BID),3,Trades[i].sl,Trades[i].tp,"My order",69,0,clrGreen);
